@@ -27,8 +27,8 @@ def selectConfigByUserid():
     if userid:
         try:
             selectResult = g.mongo.db.ConfigFile.find_one({"userid":userid})
-        except Exception:
-            return jsonify({'code': 300, 'meaasge': 'Select Fail', 'data': Exception})
+        except Exception as e:
+            return jsonify({'code': 300, 'meaasge': 'Select Fail', 'data': str(e)})
         else:
             return jsonify({'code': 200, 'meaasge': 'Select Success', 'data': selectResult['config']})
     else:
@@ -45,14 +45,14 @@ def changeConfig():
     if select_result.count() != 0:
         try:
             g.mongo.db.ConfigFile.update({'userid': userid}, { 'userid':userid,'config': configfile})
-        except Exception:
-            return jsonify({'code': 300, 'meaasge': 'Update Fail', 'data': Exception})
+        except Exception as e:
+            return jsonify({'code': 300, 'meaasge': 'Update Fail', 'data': str(e)})
         else:
             return jsonify({'code': 200, 'meaasge': 'Update Success', 'data': ''})
     else:
         try:
             g.mongo.db.ConfigFile.insert({'userid':userid,'config':configfile})
-        except Exception:
-            return jsonify({'code': 300, 'meaasge': 'Insert Fail', 'data': ''})
+        except Exception as e:
+            return jsonify({'code': 300, 'meaasge': 'Insert Fail', 'data': str(e)})
         else:
             return jsonify({'code': 200, 'meaasge': 'Insert Success', 'data': ''})
