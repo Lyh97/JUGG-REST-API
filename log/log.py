@@ -1,13 +1,9 @@
 import datetime
 
-from flask import Blueprint, request, g, jsonify
+from flask import Blueprint, request, g, jsonify, json
+from pymongo import DESCENDING
 
 log = Blueprint('log', __name__)
-
-# 通过username查出个人的所有类别
-@log.route('/log',methods=['GET'])
-def init() :
-    print("Hello LOG")
 
 # Test
 @log.route('/logtest', methods=['GET'])
@@ -18,3 +14,58 @@ def Login():
     for s in select_result:
         select_list.append({"taskName": s["taskName"], "description": s["description"]})
     return jsonify({'code': 200, 'meaasge': 'Login Fail', 'data': select_list})
+
+# Query the last running record for a single task
+@log.route('/selectCount',methods = ['GET'])
+def selectCount():
+    select_list = []
+    taskid = request.args.get('taskid');
+    if taskid:
+        try:
+            select_result = g.mongo.db.tasklog.find({'taskid':taskid}).sort('resultTime', DESCENDING)
+            select_list = select_result[0]
+            select_list.pop("_id")
+
+        except Exception as e:
+            return jsonify({'code': 300, 'meaasge': 'Select Fail', 'data': str(e)})
+        else:
+            return jsonify({'code': 200, 'meaasge': 'Select Success', 'data': select_list})
+    else:
+        return jsonify({'code': 301, 'meaasge': 'No TaskID', 'data': ''})
+
+@log.route('/selectCountList', methods= ['GET'])
+def selectCountList():
+    select_list = []
+    taskid = request.args.get('taskid');
+    if taskid:
+        try:
+            select_result = g.mongo.db.tasklog.find({'taskid': taskid}).sort('resultTime', DESCENDING)
+            select_temp = {}
+            for s in select_result:
+                select_temp[s['resultTime']]=s['log_info']['result']
+            select_list.append(select_temp)
+        except Exception as e:
+            return jsonify({'code': 300, 'meaasge': 'Select Fail', 'data': str(e)})
+        else:
+            return json.dumps({'code': 200, 'meaasge': 'Select Success', 'data': select_list}, sort_keys=False)
+    else:
+        return jsonify({'code': 301, 'meaasge': 'No TaskID', 'data': ''})
+
+@log.route('/selectCountTable', methods= ['POST'])
+def selectCountTable():
+    select_list = []
+    taskids = request.form.get('taskids').split(",");
+
+    print(taskids)
+    if taskids:
+        try:
+            select_result = g.mongo.db.tasklog.find({"taskid":{"$in": taskids}}).sort('resultTime', DESCENDING)
+            for s in select_result:
+                s.pop("_id")
+                select_list.append(s)
+        except Exception as e:
+            return jsonify({'code': 300, 'message': 'Select Fail', 'data': str(e)})
+        else:
+            return json.dumps({'code': 200, 'meaasge': 'Select Success', 'data': select_list}, sort_keys=False)
+    else:
+        return jsonify({'code':301, 'message': 'No TaskIDs', 'data': ''})

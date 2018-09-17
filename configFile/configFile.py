@@ -41,7 +41,6 @@ def changeConfig():
     configfile = json.loads(request.form.get('config'))
 
     select_result = g.mongo.db.ConfigFile.find({"userid": userid})
-    print(select_result.count())
 
     if select_result.count() != 0:
         try:
