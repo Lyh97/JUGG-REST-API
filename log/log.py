@@ -23,8 +23,11 @@ def selectCount():
     if taskid:
         try:
             select_result = g.mongo.db.tasklog.find({'taskid':taskid}).sort('resultTime', DESCENDING)
-            select_list = select_result[0]
-            select_list.pop("_id")
+            if select_result.count() >0:
+                select_list = select_result[0]
+                select_list.pop("_id")
+            else:
+                return jsonify({'code': 201, 'meaasge': 'No Result', 'data': ''})
 
         except Exception as e:
             return jsonify({'code': 300, 'meaasge': 'Select Fail', 'data': str(e)})
@@ -54,9 +57,9 @@ def selectCountList():
 @log.route('/selectCountTable', methods= ['POST'])
 def selectCountTable():
     select_list = []
-    taskids = request.form.get('taskids').split(",");
+    taskids = json.loads(request.form.get('taskids'));
 
-    print(taskids)
+    print(type(taskids))
     if taskids:
         try:
             select_result = g.mongo.db.tasklog.find({"taskid":{"$in": taskids}}).sort('resultTime', DESCENDING)
@@ -69,3 +72,20 @@ def selectCountTable():
             return json.dumps({'code': 200, 'meaasge': 'Select Success', 'data': select_list}, sort_keys=False)
     else:
         return jsonify({'code':301, 'message': 'No TaskIDs', 'data': ''})
+
+@log.route('/selectCountChart', methods= ['GET'])
+def selectCountChart():
+    select_list = []
+    taskid = request.args.get('taskid');
+    if taskid:
+        try:
+            select_result = g.mongo.db.tasklog.find({'taskid': taskid}).sort('resultTime', 1)
+            for s in select_result:
+                select_list.append({"resultTime": s["resultTime"],"result": s["log_info"]["result"]})
+                s.pop("_id")
+        except Exception as e:
+            return jsonify({'code': 300, 'message': 'Select Fail', 'data': str(e)})
+        else:
+            return json.dumps({'code': 200, 'message': 'Select Success', 'data': select_list}, sort_keys=False)
+    else:
+        return jsonify({'code': 301, 'message': 'No TaskIds', 'data': ''})

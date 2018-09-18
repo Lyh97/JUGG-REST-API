@@ -30,7 +30,10 @@ def selectConfigByUserid():
         except Exception as e:
             return jsonify({'code': 300, 'meaasge': 'Select Fail', 'data': str(e)})
         else:
-            return jsonify({'code': 200, 'meaasge': 'Select Success', 'data': selectResult['config']})
+            if selectResult is None:
+                return jsonify({'code': 201, 'meaasge': 'No Result', 'data': ''})
+            else:
+                return jsonify({'code': 200, 'meaasge': 'Select Success', 'data': selectResult['config']})
     else:
         return jsonify({'code': 301, 'meaasge': 'No UserID', 'data': ''})
 
